@@ -24,6 +24,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
 ]
 requires-python = ">=3.7"
+dependencies = [
+    "anyio>=3.7.1",
+]
 
 [project.urls]
 homepage = "https://github.com/fgmacedo/python-statemachine"

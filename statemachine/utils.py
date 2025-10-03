@@ -1,7 +1,9 @@
-import asyncio
 import threading
 
-_cached_loop = threading.local()
+from anyio.from_thread import BlockingPortalProvider
+
+_cached_portal = threading.local()
+_cached_portal.provider = BlockingPortalProvider()
 """Loop that will be used when the SM is running in a synchronous context. One loop per thread."""
 
 
@@ -25,15 +27,14 @@ def ensure_iterable(obj):
         return [obj]
 
 
+async def _do(coroutine):
+    return await coroutine
+
+
 def run_async_from_sync(coroutine):
     """
     Compatibility layer to run an async coroutine from a synchronous context.
     """
-    global _cached_loop
-    try:
-        asyncio.get_running_loop()
-        return coroutine
-    except RuntimeError:
-        if not hasattr(_cached_loop, "loop"):
-            _cached_loop.loop = asyncio.new_event_loop()
-        return _cached_loop.loop.run_until_complete(coroutine)
+    global _cached_portal
+    with _cached_portal.provider as portal:
+        return portal.call(_do, coroutine)
